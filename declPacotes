@@ -147,5 +147,5 @@ void Pacotes::showPacote()
 		<< "Data de Fim...........: " << dataFim.getDia() << '/' << dataFim.getMes() << '/' << dataFim.getAno() << '\n'
 		<< "Preco(p. pessoa)......: " << preco << '\n'
 		<< "Lugares...............: " << lugares << '\n'
-		<< "Lugares Vendidos......: " << lugaresV;
+		<< "Lugares Vendidos......: " << lugaresV<<endl;
 }
