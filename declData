@@ -1,0 +1,57 @@
+#include "Data.h"
+#include <iostream>
+
+using namespace std;
+
+Data::Data()
+{
+}
+
+Data::Data(string d, string m, string a)
+{
+	dia = d;
+	mes = m;
+	ano = a;
+}
+
+void Data::setDia(string d)
+{
+	dia = d;
+}
+
+void Data::setMes(string m)
+{
+	mes = m;
+}
+
+void Data::setAno(string a)
+{
+	ano = a;
+}
+
+void Data::setData(string d, string m, string a)
+{
+	dia = d;
+	mes = m;
+	ano = a;
+}
+
+string Data::getDia() const
+{
+	return dia;
+}
+
+string Data::getMes() const
+{
+	return mes;
+}
+
+string Data::getAno() const
+{
+	return ano;
+}
+
+void Data::showData() const
+{
+	cout << dia << "/" << mes << "/" << ano;
+}
