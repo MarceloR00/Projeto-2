@@ -53,5 +53,5 @@ string Data::getAno() const
 
 void Data::showData() const
 {
-	cout << dia << "/" << mes << "/" << ano;
+	cout << dia << "/" << mes << "/" << ano<<endl;
 }
