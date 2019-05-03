@@ -1,0 +1,1861 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <fstream>
+
+using namespace std;
+
+//----------------------------Structs------------------------------
+struct Date
+{
+	unsigned int ano;
+	unsigned int mes;
+	unsigned int dia;
+};
+struct Morada
+{
+	string rua;
+	string porta;
+	string andar;
+	string codPostal;
+	string localidade;
+};
+struct Agency
+{
+	string nome;
+	string NIF;
+	string URL;
+	Morada morada;
+	string fichClientes;
+	string fichPacotes;
+};
+struct Client
+{
+	string nome;
+	string NIF;
+	int agregado;
+	Morada morada;
+	string pacotes;
+};
+
+struct TravelPack
+{
+	int id;
+	string locais;
+	Date dataIni;
+	Date dataFim;
+	int precoP;
+	int lugaresV;
+	int lugares;
+
+};
+
+//-----------------------------Protótipos de funções para que seja possivel regressar a mesma.------------------------------------
+void analisarPacotesD(vector <int> &aux, vector<TravelPack> Pacotes);
+void alterarPacote2(int aux, vector<TravelPack>&Pacotes);
+
+
+//---------------------------Guardar Alterações-Funções--------------------
+
+// Guardar Alterações feitas - Parte 3 - Guardar no ficheiro dos clientes todas as alterações feitas
+void guardarClientes(int aux,vector<Agency> Agencia,vector<Client> Clientes)
+{
+	ofstream guardar_clientes;
+	guardar_clientes.open(Agencia.at(0).fichClientes);
+	for (int i = 0;i < Clientes.size();i++)
+	{
+		if (aux == 0)
+		{
+			guardar_clientes << Clientes.at(i).nome << '\n';
+			guardar_clientes << Clientes.at(i).NIF << '\n';
+			guardar_clientes << Clientes.at(i).agregado << '\n';
+			guardar_clientes << Clientes.at(i).morada.rua << '/' << Clientes.at(i).morada.porta << '/' << Clientes.at(i).morada.andar << '/' << Clientes.at(i).morada.codPostal << '/' << Clientes.at(i).morada.localidade << '\n';
+			guardar_clientes << Clientes.at(i).pacotes << '\n';
+			aux++;
+		}
+		else
+		{
+			guardar_clientes << "::::::::::\n";
+			guardar_clientes << Clientes.at(i).nome << '\n';
+			guardar_clientes << Clientes.at(i).NIF << '\n';
+			guardar_clientes << Clientes.at(i).agregado << '\n';
+			guardar_clientes << Clientes.at(i).morada.rua << '/' << Clientes.at(i).morada.porta << '/' << Clientes.at(i).morada.andar << '/' << Clientes.at(i).morada.codPostal << '/' << Clientes.at(i).morada.localidade << '\n';
+			guardar_clientes << Clientes.at(i).pacotes << '\n';
+		}
+	}
+	guardar_clientes.close();
+
+}
+
+// Guardar Alterações feitas - Parte 2 - Guardar no ficheiro dos pacotes todas as alterações feitas
+void guardarPacotes(int aux,vector<Agency> Agencia,vector<TravelPack> Pacotes)
+{
+	ofstream guardar_pacotes;
+	guardar_pacotes.open(Agencia.at(0).fichPacotes);
+	for (int i = 0;i < Pacotes.size();i++)
+	{
+		if (aux == 0)
+		{
+			guardar_pacotes << Pacotes.at(Pacotes.size() - 1).id << '\n';
+			guardar_pacotes << Pacotes.at(i).id << '\n';
+			guardar_pacotes << Pacotes.at(i).locais<< '\n';
+			guardar_pacotes << Pacotes.at(i).dataIni.ano <<'/'<<Pacotes.at(i).dataIni.mes<<'/'<<Pacotes.at(i).dataIni.dia<< '\n';
+			guardar_pacotes << Pacotes.at(i).dataFim.ano << '/' << Pacotes.at(i).dataFim.mes << '/' << Pacotes.at(i).dataFim.dia << '\n';
+			guardar_pacotes << Pacotes.at(i).precoP << '\n';
+			guardar_pacotes << Pacotes.at(i).lugares << '\n';
+			guardar_pacotes << Pacotes.at(i).lugaresV << '\n';
+			aux++;
+		}
+		else
+		{
+			guardar_pacotes << "::::::::::\n";
+			guardar_pacotes << Pacotes.at(i).id << '\n';
+			guardar_pacotes << Pacotes.at(i).locais << '\n';
+			guardar_pacotes << Pacotes.at(i).dataIni.ano << '/' << Pacotes.at(i).dataIni.mes << '/' << Pacotes.at(i).dataIni.dia << '\n';
+			guardar_pacotes << Pacotes.at(i).dataFim.ano << '/' << Pacotes.at(i).dataFim.mes << '/' << Pacotes.at(i).dataFim.dia << '\n';
+			guardar_pacotes << Pacotes.at(i).precoP << '\n';
+			guardar_pacotes << Pacotes.at(i).lugares << '\n';
+			guardar_pacotes << Pacotes.at(i).lugaresV << '\n';
+		}
+	}
+}
+
+// Guardar Alterações feitas - Parte 1
+void guardarAlter(vector<Agency> Agencia,vector<Client> Clientes,vector<TravelPack> Pacotes)
+{
+	int aux = 0;
+	cout << "\n A guardar alteracoes....."<<endl;
+	guardarClientes(aux,Agencia,Clientes);
+	guardarPacotes(aux,Agencia,Pacotes);
+	cout << "\n Alteracoes guardadas com sucesso!!!"<<endl;
+}
+
+//---------------------------Tirar espaços de string-função--------------------
+
+// função auxiliar para formatar a string( tirar espaços e por em Upper Case).
+void formatarstringparacomparar(string aux,string &temp)
+{
+	aux = aux.substr(aux.find_first_not_of(' '), aux.find_last_not_of(' ') + 1);
+	for (int i = 0; i < aux.size();i++)
+	{
+		if (aux.at(i) != ' ')
+			temp.push_back(toupper(aux.at(i)));
+	}
+}
+
+// função auxiliar para seperar os destinos com o objetivo de ser comparado com o destino pretendido pelo utilizador.
+void separarDestinos(string aux,vector<string> &destinos)
+{
+	string temp,temp1;
+	temp = aux.substr(0, aux.find('-'));
+	formatarstringparacomparar(temp, temp1);
+	destinos.push_back(temp1);
+	aux = aux.substr(aux.find('-') + 1, aux.size());
+	temp.clear();
+	temp1.clear();
+	for (int i = 0; i < aux.size();i++)
+	{
+		if (aux.at(i) == ',')
+		{
+			formatarstringparacomparar(temp, temp1);
+			destinos.push_back(temp1);
+			temp.clear();
+			temp1.clear();
+		}
+		else
+		{
+			temp.push_back(aux.at(i));
+		}
+	}
+	formatarstringparacomparar(temp, temp1);
+	destinos.push_back(temp1);
+
+}
+
+//---------------------------Encontrar Inputs-Funções--------------------
+
+// encontrar o cliente pelo nome.
+void findCliente(string input,vector<int> &clientesencontrados,vector<Client>Clientes)
+{
+	string temp,temp2;
+	formatarstringparacomparar(input, temp);
+	for (int k = 0;k < Clientes.size();k++)
+	{
+		temp2 = "";
+		for (int j = 0;j < Clientes.at(k).nome.size();j++)
+		{
+			if (Clientes.at(k).nome.at(j) !=' ')
+				temp2.push_back(toupper(Clientes.at(k).nome.at(j)));
+		}
+		if (temp == temp2)
+			clientesencontrados.push_back(k);
+	}
+}
+
+// encontrar o pacote pelo nome.
+void findPacoteByName(string aux,vector<int> &pacotesencontrados,vector<TravelPack> Pacotes)
+{
+	vector<string> destinos;
+	string temp,temp2;
+	formatarstringparacomparar(aux, temp);
+	for (int i = 0; i < Pacotes.size();i++)
+	{
+		destinos.clear();
+		temp2.clear();
+		if ((Pacotes.at(i).locais.find('-') < 0)|| (Pacotes.at(i).locais.find('-') > Pacotes.at(i).locais.size()))
+		{
+			formatarstringparacomparar(Pacotes.at(i).locais, temp2);
+			if (temp == temp2)
+				pacotesencontrados.push_back(i);
+		}
+		else
+		{
+			separarDestinos(Pacotes.at(i).locais,destinos);
+			for (int k = 0;k < destinos.size();k++)
+			{
+				if (destinos.at(k) == temp)
+				{
+					pacotesencontrados.push_back(i);
+					break;
+				}
+			}
+		}
+	}
+}
+
+// encontrar o Pacote pelo identificador numérico.
+void findPacoteById(int aux,vector<TravelPack>&Pacotes)
+{
+	bool nexiste = true;
+	while (nexiste)
+	{
+		for (int k = 0; k < Pacotes.size();k++)
+		{
+			if (Pacotes.at(k).id == aux || Pacotes.at(k).id == -aux)
+			{
+				nexiste = false;
+				alterarPacote2(k,Pacotes);
+			}
+		}
+		if (nexiste == true)
+		{
+			cerr << "\nO pacote " << aux << " nao foi encontrado, tente novamente!!! ";
+			cin >> aux;
+		}
+	}
+}
+
+
+//----------------------------Verificar Inputs-Funções--------------------
+
+// verificar se o utilizador introduziu 0(zero) onde pede para introduzir 0 para voltar atras.
+void verificarVoltarAtras(int &input)
+{
+	while (input != 0 || cin.fail()||cin.eof())
+	{
+		cin.clear(); cin.ignore(100, '\n');
+		cout << "Insira 0(zero) para voltar atras.";
+		cin >> input;
+	}
+}
+
+// verificar se o utilizador introduziu corretamente a opção escolhida.
+void verificarOpcoes(int &input, int opcoes)
+{
+	if (opcoes == 0)
+	{
+		while (cin.fail()||cin.eof())
+		{
+			cin.clear(); cin.ignore(100, '\n');
+			cerr << "\nErro. O que inseriu e invalido ou nao corresponde a nenhuma das opcoes! Tente novamente: ";
+			cin >> input;
+		}
+	}
+	else
+	{
+		while (cin.fail() || (input > opcoes) || (input < 0)||cin.eof())
+		{
+			cin.clear(); cin.ignore(100, '\n');
+			cerr << "\nErro. O que inseriu e invalido ou nao corresponde a nenhuma das opcoes! Tente novamente: ";
+			cin >> input;
+		}
+
+	}
+}
+
+// verificar se o utilizador pretende prosseguir com a função.
+void verificarPasso(char &opcao)
+{
+	while ((opcao != 'y' && opcao != 'n') || cin.fail()||cin.eof())
+	{
+		cin.clear(); cin.ignore(100, '\n');
+		cerr << "\nErro, o que inseriu e invalido ou nao corresponde a nenhuma das opcoes! Tente novamente: ";
+		cin >> opcao;
+	}
+}
+
+// verificar se existe algum cliente com o nome especificado pelo utilizador.
+void verificarNomeCliente(vector<int> &clientesencontrados, string aux,vector<Client>Clientes) 
+{
+	while (clientesencontrados.size() == 0)
+	{
+		cout << "\nNao foi encontrado nenhum cliente com o nome " << aux << " !" << endl;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		cout << "\nNome completo do cliente que pretende alterar: ";
+		getline(cin, aux);
+		findCliente(aux, clientesencontrados,Clientes);
+	}
+}
+
+// verificar se existe algum pacote com o destino especificado pelo utilizador.
+void verificarPacote(vector<int> &pacotesencontrados, string destino,vector<TravelPack>Pacotes)
+{
+	while (pacotesencontrados.size()==0)
+	{
+		cout << "\nNao foi encontrado nenhum pacote disponivel com o destino " << destino << "." << endl;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		cout << "\nDestino pretendido(0 para voltar atras): ";
+		getline(cin, destino);
+		if (destino == "0")
+		{
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+
+		}
+		else
+		{
+			findPacoteByName(destino, pacotesencontrados,Pacotes);
+			analisarPacotesD(pacotesencontrados,Pacotes);
+		}
+	}
+}
+
+// verificar se o input é um numero inteiro e positivo.
+void verificarNumeroPositivo(int &input)
+{
+	while (cin.fail()|| input<0||cin.eof())
+	{
+		cin.clear(); cin.ignore(100, '\n');
+		cout << "Input invalido! Tente novamente.: ";
+		cin >> input;
+	}
+}
+
+// verificar se existe algum pacote com o mesmo identificador numérico.
+void verificarIdDoPacote(int &aux,vector<TravelPack> Pacotes)
+{
+	bool nexiste = true;
+	while (nexiste)
+	{
+		for (int k = 0;k < Pacotes.size();k++)
+		{
+			if (Pacotes.at(k).id == aux || Pacotes.at(k).id == -aux)
+			{
+				nexiste = false;
+				break;
+			}
+		}
+		if (nexiste == false)
+		{
+			cout << "\nJa existe um pacote com o mesmo identificador, tente novamente! ";;
+			cin >> aux;
+			nexiste = true;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+// verificar se há lugares disponiveis.
+bool verificarLugares(int cliente,int pacote,vector<Client> Clientes,vector<TravelPack> Pacotes)
+{
+	int lugaresDisponives;
+	lugaresDisponives = Pacotes.at(pacote).lugares - Pacotes.at(pacote).lugaresV;
+	while (lugaresDisponives<Clientes.at(cliente).agregado)
+	{
+		cout<<"\nO Pacote que pretende comprar nao tem lugares suficientes!"<<'\n'
+			<<"\nInsira o identificador numerico do Pacote que prentende comprar: ";
+		cin >> pacote;
+		cin.ignore(100, '\n');
+		verificarOpcoes(pacote, 0);
+		lugaresDisponives = Pacotes.at(pacote).lugares - Pacotes.at(pacote).lugaresV;
+	}
+	return true;
+}
+
+//----------------------------Visualização da Informação Pacotes -Funções--------------------
+
+// função auxiliar para imprimir os pacotes.
+void printPacote(int i,vector<TravelPack>Pacotes)
+{
+	cout << "\nIdentificador numerico unico do Pacote: " << Pacotes.at(i).id << '\n'
+		<< "Principal local turistico de destino..: " << Pacotes.at(i).locais << endl;
+	if ((Pacotes.at(i).dataIni.mes <= 9) && (Pacotes.at(i).dataIni.dia <= 9))
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+	else if (Pacotes.at(i).dataIni.mes <= 9)
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << '/' << Pacotes.at(i).dataIni.dia << '\n';
+	else
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << '/' << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+	if ((Pacotes.at(i).dataFim.mes <= 9) && (Pacotes.at(i).dataFim.dia <= 9))
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+	else if (Pacotes.at(i).dataFim.mes <= 9)
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << '/' << Pacotes.at(i).dataFim.dia << '\n';
+	else
+		cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << '/' << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+	cout << "Preco por pessoa......................: " << Pacotes.at(i).precoP << '\n'
+		<< "Numero de lugares disponiveis.........: " << Pacotes.at(i).lugares << '\n'
+		<< "Numero de lugares vendidos............: " << Pacotes.at(i).lugaresV << endl;
+}
+
+// função auxiliar para imprimir os pacotes do Cliente.
+void printPacoteCliente(int aux,vector<TravelPack>Pacotes,int &temp)
+{
+	for (int i = 0;i < Pacotes.size();i++)
+	{
+		if ((Pacotes.at(i).id == aux)|| (Pacotes.at(i).id == -aux))
+		{
+			temp++;
+			cout << "\nIdentificador numerico unico do Pacote: " << Pacotes.at(i).id << '\n'
+				<< "Principal local turistico de destino..: " << Pacotes.at(i).locais << endl;
+			if ((Pacotes.at(i).dataIni.mes <= 9) && (Pacotes.at(i).dataIni.dia <= 9))
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+			else if (Pacotes.at(i).dataIni.mes <= 9)
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << '/' << Pacotes.at(i).dataIni.dia << '\n';
+			else
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << '/' << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+			if ((Pacotes.at(i).dataFim.mes <= 9) && (Pacotes.at(i).dataFim.dia <= 9))
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+			else if (Pacotes.at(i).dataFim.mes <= 9)
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << '/' << Pacotes.at(i).dataFim.dia << '\n';
+			else
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << '/' << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+			cout << "Preco por pessoa......................: " << Pacotes.at(i).precoP << '\n'
+				<< "Numero de lugares disponiveis.........: " << Pacotes.at(i).lugares << '\n'
+				<< "Numero de lugares vendidos............: " << Pacotes.at(i).lugaresV << endl;
+		}
+	}
+}
+
+//------------------------------
+
+// Calcular o rendimento.
+double rendimento(vector<TravelPack>Pacotes)
+{
+	int rendimentoTotal=0;
+	for (int i = 0; i < Pacotes.size();i++)
+	{
+		rendimentoTotal += Pacotes.at(i).precoP * Pacotes.at(i).lugaresV;
+	}
+	return rendimentoTotal;
+}
+
+// Contar os pacotes esgotados.
+int countPacotesEsgotados(vector<TravelPack>Pacotes)
+{
+	int pacotesEsgotados=0;
+	for (int i = 0;i < Pacotes.size();i++)
+	{
+		if (Pacotes.at(i).id < 0)
+			pacotesEsgotados++;
+	}
+	return pacotesEsgotados;
+}
+
+// Visualização do rendimento da agencia.
+void verRendimento(vector<Client>Clientes,vector<TravelPack>Pacotes)
+{
+	int input;
+	cout << "\n\t\t\tINFORMACOES-NUMERO E VALOR DE PACOTES VENDIDOS" << "\n\n"
+		<< "Pacotes esgotados: " << countPacotesEsgotados(Pacotes) << '\n'
+		<< "Rendimento (sem despesas incluidas): " << rendimento(Pacotes) <<" Euros" <<"\n\n"
+		<< "Insira 0(zero) para voltar atras. ";
+	cin >> input;
+	verificarVoltarAtras(input);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+//------------------------------
+
+// Visualizar informação dos pacotes vendidos a um cliente especificado pelo utilizador - Parte 2.
+void infoPacotesCliente2(int i,vector<Client>Clientes,vector<TravelPack>Pacotes)
+{
+	int aux = 0;
+	string temp;
+	vector <string> pacotesDoCliente;
+	cout << "\nPacotes do cliente: " << Clientes.at(i).nome << endl;
+	for (int k = 0;k < Clientes.at(i).pacotes.length();k++)
+	{
+		if ((Clientes.at(i).pacotes.at(k) == ' ') || (Clientes.at(i).pacotes.at(k) == ';'))
+		{
+			if (temp != "")
+			{
+				pacotesDoCliente.push_back(temp);
+				temp = "";
+			}
+		}	
+		else
+		{
+			temp.push_back(Clientes.at(i).pacotes.at(k));
+		}
+	}
+	pacotesDoCliente.push_back(temp);
+	for (int j = 0;j < pacotesDoCliente.size();j++)
+	{
+		printPacoteCliente(stoi(pacotesDoCliente.at(j)),Pacotes,aux);
+	}
+	if (aux == 0)
+	{
+		cout << "\nNao foi encontrado nenhum pacote correspondente."<<endl;
+	}
+}
+
+// Visualizar informação dos pacotes vendidos a um cliente especificado pelo utilizador - Parte 1.
+void infoPacotesCliente(vector<Client>Clientes,vector<TravelPack>Pacotes,int temp=0)
+{
+	int continuar;
+	vector<int> clientesencontrados;
+	string aux;
+	cout << "\n\t\t\tInformacao dos pacotes vendidos a um cliente especifico" << "\n\n"
+		<< "Nome completo do cliente(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, aux);
+	if (aux == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		findCliente(aux, clientesencontrados,Clientes);
+		verificarNomeCliente(clientesencontrados, aux,Clientes);
+		if (clientesencontrados.size() == 1)
+		{
+			infoPacotesCliente2(clientesencontrados.at(0),Clientes,Pacotes);
+		}
+		else
+		{
+			cout << "\nExixte mais que um cliente com o nome " << aux << "." << endl;
+			for (int i = 0;i < clientesencontrados.size();i++)
+			{
+				infoPacotesCliente2(clientesencontrados.at(i),Clientes,Pacotes);
+			}
+		}
+	}
+	cout << "\nInsira 0(zero) para continuar. ";
+	cin >> continuar;
+	verificarVoltarAtras(continuar);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}	
+
+// Visualizar informação dos pacotes vendidos a todos os clientes.
+void infoPacotesTClientes(vector<Client> Clientes,vector<TravelPack>Pacotes)
+{
+	int continuar;
+	cout << "\n\t\t\tInformacao dos pacotes vendidos a todos os clientes" << "\n\n";
+	for (int i = 0;i < Clientes.size();i++)
+	{
+		infoPacotesCliente2(i,Clientes,Pacotes);
+	}
+	cout << "\nInsira 0(zero) para continuar. ";
+	cin >> continuar;
+	verificarVoltarAtras(continuar);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Sub_menu -> Visualizar a informação dos pacotes vendidos.
+void verInfoPacotesV(vector<Client> Clientes,vector<TravelPack> Pacotes)
+{
+	int opcao;
+	bool ON = true;
+	while (ON)
+	{
+		cout << "\n\t\t\tINFORMACOES-PACOTES VENDIDOS" << "\n\n"
+			<< "1. A um cliente especifico." << '\n'
+			<< "2. A todos os clientes." << "\n\n"
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		verificarOpcoes(opcao, 2);
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		switch (opcao)
+		{
+		case 1:
+			infoPacotesCliente(Clientes,Pacotes);
+			break;
+		case 2:
+			infoPacotesTClientes(Clientes,Pacotes);
+			break;
+		case 0:
+			ON = false;
+			break;
+		}
+	}
+}
+
+//------------------------------
+
+// função auxiliar para analisar os pacotes que estão disponiveis
+void analisarPacotesD(vector <int> &aux,vector<TravelPack> Pacotes)
+{
+	int x = 1;
+	for (int i = 0;i < aux.size() ;i++)
+	{
+		if (Pacotes.at(aux.at(i)).id > 0)
+		{
+			continue;
+		}
+		else
+		{
+			aux.erase(aux.begin() + i);
+		}
+	}
+}
+
+// função auxiliar para encontrar os pacotes que estão comprimidos entre duas datas.
+void datasEntre(int k, Date inicio, Date fim,int &aux,vector<TravelPack> Pacotes)
+{
+	if (Pacotes.at(k).id > 0)
+	{
+		if ((Pacotes.at(k).dataIni.ano == inicio.ano) && (Pacotes.at(k).dataFim.ano == fim.ano))
+		{
+			if ((Pacotes.at(k).dataIni.mes == inicio.mes) && (Pacotes.at(k).dataFim.mes == fim.mes))
+			{
+				if ((Pacotes.at(k).dataIni.dia >= inicio.dia) && (Pacotes.at(k).dataFim.dia <= fim.dia))
+				{
+					aux++;
+					printPacote(k,Pacotes);
+				}
+			}
+			else if ((Pacotes.at(k).dataIni.mes > inicio.mes) && (Pacotes.at(k).dataFim.mes < fim.mes))
+			{
+				aux++;
+				printPacote(k, Pacotes);
+			}
+			else if ((Pacotes.at(k).dataIni.mes == inicio.mes) && (Pacotes.at(k).dataFim.mes < fim.mes))
+			{
+				if (Pacotes.at(k).dataIni.dia >= inicio.dia)
+				{
+					aux++;
+					printPacote(k, Pacotes);
+				}
+			}
+			else if ((Pacotes.at(k).dataIni.mes > inicio.mes) && (Pacotes.at(k).dataFim.mes == fim.mes))
+			{
+				if (Pacotes.at(k).dataFim.dia <= fim.dia)
+				{
+					aux++;
+					printPacote(k, Pacotes);
+				}
+			}
+		}
+		else if ((Pacotes.at(k).dataIni.ano > inicio.ano) && (Pacotes.at(k).dataFim.ano < fim.ano))
+		{
+			aux++;
+			printPacote(k, Pacotes);
+		}
+		else if ((Pacotes.at(k).dataIni.ano > inicio.ano) && (Pacotes.at(k).dataFim.ano == fim.ano))
+		{
+			if (Pacotes.at(k).dataFim.mes < fim.mes)
+			{
+				aux++;
+				printPacote(k, Pacotes);
+			}
+			else if (Pacotes.at(k).dataFim.mes == fim.mes)
+			{
+				if (Pacotes.at(k).dataFim.dia <= fim.dia)
+				{
+					aux++;
+					printPacote(k, Pacotes);
+				}
+			}
+		}
+		else if ((Pacotes.at(k).dataIni.ano == inicio.ano) && (Pacotes.at(k).dataFim.ano < fim.ano))
+		{
+			if (Pacotes.at(k).dataFim.mes > fim.mes)
+			{
+				aux++;
+				printPacote(k,Pacotes);
+			}
+			else if (Pacotes.at(k).dataFim.mes == fim.mes)
+			{
+				if (Pacotes.at(k).dataFim.dia >= fim.dia)
+				{
+					aux++;
+					printPacote(k, Pacotes);
+				}
+			}
+		}
+	}
+}
+
+// Visualizar informação de um pacote disponivel relativo a um destino + entre data de inicio e fim especificados pelo utilizador.
+void dataPlusDestPacote(vector<TravelPack>Pacotes)
+{
+	int aux,aux2=0;
+	string destino;
+	vector <int> pacotesencontrados;
+	cout << "\n\t\t\tInformacao de Todos os Pacotes Relativos a um Destino Especifico e Entre Duas Datas." << "\n\n"
+		<< "Destino pretendido(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, destino);
+	findPacoteByName(destino, pacotesencontrados,Pacotes);
+	analisarPacotesD(pacotesencontrados,Pacotes);
+	if (destino == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		while (aux2==0)
+		{
+			verificarPacote(pacotesencontrados, destino,Pacotes);
+			char barra;
+			Date inicio;
+			Date fim;
+			cout << "Data de inicio de viagem (no formato AAAA/MM/DD).: ";
+			cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+			}
+			cout << "Data de fim de viagem (no formato AAAA/MM/DD)....: ";
+			cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+			}
+			for (int k = 0;k < pacotesencontrados.size();k++)
+			{
+					datasEntre(pacotesencontrados.at(k), inicio, fim,aux2,Pacotes);
+			}
+			if (aux2 == 0)
+			{
+				cout << "\nNao foi encontrado nenhum pacote disponivel com o destino " << destino << " entre essas duas datas!!!" << endl
+					<< "Porfavor introduza as datas novamente."<<endl<<endl;
+			}
+			else
+			{
+				cout << "\nInsira 0(zero) para voltar atras. ";
+				cin >> aux;
+				verificarVoltarAtras(aux);
+				cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			}
+		}
+	}
+}
+
+// Visualizar informação de um pacote diponivel entre data de inicio e fim especificada pelo utilizador.
+void infoDataPacotesD(vector<TravelPack> Pacotes)
+{
+	int aux, aux2=0;
+	char barra;
+	Date inicio;
+	Date fim;
+	cout << "\n\t\t\tInformacao de Todos os Pacotes Entre Duas Datas." << "\n\n"
+		<< "De (no formato AAAA/MM/DD)...: ";
+	cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+	while (cin.fail())
+	{
+		cin.clear(); cin.ignore(100, '\n');
+		cout << "Input invalido! Tente novamente.: ";
+		cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+	}
+	cout <<"Ate (no formato AAAA/MM/DD)..: ";
+	cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+	while (cin.fail())
+	{
+		cin.clear(); cin.ignore(100, '\n');
+		cout << "Input invalido! Tente novamente.: ";
+		cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+	}
+
+	for (int i = 0; i < Pacotes.size();i++)
+	{
+		datasEntre(i, inicio, fim, aux2,Pacotes);
+	}
+	if (aux2 == 0)
+		cout << "\nNao foi encontrado nenhum pacote disponivel entre essas duas datas!!!" << endl;
+	cout << "\nInsira 0(zero) para voltar atras. ";
+	cin >> aux;
+	verificarVoltarAtras(aux);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Visualizar informação de um pacote disponivel relativo a um destino especificado pelo utilizador.
+void infoDestPacotesD(vector<TravelPack> Pacotes)
+{
+	int aux,aux2=0;
+	string destino;
+	cout << "\n\t\t\tInformacao de Todos os Pacotes Relativos a um Destino Especifico." << "\n\n"
+		<< "Destino pretendido(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, destino);
+	vector <int> pacotesencontrados;
+	findPacoteByName(destino,pacotesencontrados,Pacotes);
+	analisarPacotesD(pacotesencontrados,Pacotes);
+	if (destino == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		verificarPacote(pacotesencontrados,destino,Pacotes);
+		for (int k = 0;k < pacotesencontrados.size();k++)
+		{
+			printPacote(pacotesencontrados.at(k),Pacotes);
+		}
+	}
+	cout << "\nInsira 0(zero) para voltar atras. ";
+	cin >> aux;
+	verificarVoltarAtras(aux);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Visualizar informação de todos os pacotes disponiveis.
+void infoTodosPacotesD(vector<TravelPack> Pacotes)
+{
+	int aux;
+	cout << "\n\t\t\tInformacao de Todos os Pacotes" << '\n';
+	for (int i = 0;i < Pacotes.size();i++)
+	{
+		if (Pacotes.at(i).id > 0)
+		{
+			cout << "\nIdentificador numerico unico do Pacote: " << Pacotes.at(i).id << '\n'
+				<< "Principal local turistico de destino..: " << Pacotes.at(i).locais << endl;
+			if (( Pacotes.at(i).dataIni.mes <= 9) && (Pacotes.at(i).dataIni.dia <= 9))
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+			else if (Pacotes.at(i).dataIni.mes <= 9)
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << "/0" << Pacotes.at(i).dataIni.mes << "/" << Pacotes.at(i).dataIni.dia << '\n';
+			else
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataIni.ano << '/' << Pacotes.at(i).dataIni.mes << "/0" << Pacotes.at(i).dataIni.dia << '\n';
+			if ((Pacotes.at(i).dataFim.mes <= 9) && (Pacotes.at(i).dataFim.dia <= 9))
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+			else if (Pacotes.at(i).dataFim.mes <= 9)
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << "/0" << Pacotes.at(i).dataFim.mes << '/' << Pacotes.at(i).dataFim.dia << '\n';
+			else
+				cout << "Data de inicio da viagem..............: " << Pacotes.at(i).dataFim.ano << '/' << Pacotes.at(i).dataFim.mes << "/0" << Pacotes.at(i).dataFim.dia << '\n';
+			cout<< "Preco por pessoa......................: " << Pacotes.at(i).precoP << '\n'
+				<< "Numero de lugares disponiveis.........: " << Pacotes.at(i).lugares << '\n'
+				<< "Numero de lugares vendidos............: " << Pacotes.at(i).lugaresV << endl;
+		}
+	}
+	cout << "\nInsira 0(zero) para voltar atras. ";
+	cin >> aux;
+	verificarVoltarAtras(aux);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Sub_menu -> Informação dos Pacotes Disponiveis.
+void verInfoPacotesD(vector<TravelPack> Pacotes)
+{
+	bool ON = true;	
+	int opcao;
+	while (ON)
+	{
+		cout << "\n\t\t\tINFORMACOES-PACOTES DISPONIVEIS" << "\n\n"
+			<< "1. Visualizar informacao de todos os pacotes." << '\n'
+			<< "2. Visualizar informacao de todos os pacotes relativos a um destino especifico." << '\n'
+			<< "3. Visualizar informacao de todos os pacotes entre duas datas." << '\n'
+			<< "4. Visualizar informacao de todos os pacotes relativos a um destino especifico e entre duas datas." << "\n\n"
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		verificarOpcoes(opcao, 4);
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		switch (opcao)
+		{
+		case 1:
+			infoTodosPacotesD(Pacotes);
+			break;
+		case 2:
+			infoDestPacotesD(Pacotes);
+			break;
+		case 3:
+			infoDataPacotesD(Pacotes);
+			break;
+		case 4:
+			dataPlusDestPacote(Pacotes);
+			break;
+		case 0:
+			ON = false;
+			break;
+		}
+	}
+}
+
+//----------------------------Visualização da Informação Clientes -Funções--------------------
+
+// Visualizar informação de todos os clientes.
+void verInfoClients(vector<Client> Clientes)
+{
+	int continuar;
+	cout << "\n\t\t\tInformacao de Todos os Clientes Registados." << '\n';
+	for (int i = 0;i < Clientes.size();i++)
+	{
+		cout 
+			<< "\nNome.............: " << Clientes.at(i).nome << '\n'
+			<< "NIF..............: " << Clientes.at(i).NIF << '\n'
+			<< "Agregado Familiar: " << Clientes.at(i).agregado << '\n'
+			<< "Morada...........: " << Clientes.at(i).morada.rua << " / " << Clientes.at(i).morada.porta << " / " << Clientes.at(i).morada.andar << " / " << Clientes.at(i).morada.codPostal << " / " << Clientes.at(i).morada.localidade << '\n'
+			<< "Pacotes Comprados: " << Clientes.at(i).pacotes<<'\n' ;
+
+	}
+	cout << "\nInsira 0(zero) para voltar atras. ";
+	cin >> continuar;
+	verificarVoltarAtras(continuar);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Visualizar informação de um cliente especificado pelo utilizador.
+void verInfoClient(vector<Client>Clientes)
+{
+	vector <int> clientesencontrados;
+	string aux;
+	int continuar;
+	cout << "\n\t\t\tINFORMACOES-CLIENTES" << '\n'
+		<< "\nInsira o nome completo do cliente que pretende visualizar(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, aux);
+
+	if (aux == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		findCliente(aux, clientesencontrados,Clientes);
+		verificarNomeCliente(clientesencontrados, aux,Clientes);
+		if (clientesencontrados.size() == 1)
+		{
+			cout << "\n\t\t\tInformacao Sobre o Cliente " << Clientes.at(clientesencontrados.at(0)).nome << '\n';
+			cout
+				<< "\nNome.............: " << Clientes.at(clientesencontrados.at(0)).nome << '\n'
+				<< "NIF..............: " << Clientes.at(clientesencontrados.at(0)).NIF << '\n'
+				<< "Agregado Familiar: " << Clientes.at(clientesencontrados.at(0)).agregado << '\n'
+				<< "Morada...........: " << Clientes.at(clientesencontrados.at(0)).morada.rua << " / " << Clientes.at(clientesencontrados.at(0)).morada.porta << " / " << Clientes.at(clientesencontrados.at(0)).morada.andar << " / " << Clientes.at(clientesencontrados.at(0)).morada.codPostal << " / " << Clientes.at(clientesencontrados.at(0)).morada.localidade << '\n'
+				<< "Pacotes Comprados: " << Clientes.at(clientesencontrados.at(0)).pacotes << "\n\n";
+
+		}
+		else
+		{
+			cout<<"\nExiste mais do que um cliente com o nome " << Clientes.at(clientesencontrados.at(0)).nome<<"."
+				<< "\n\t\t\tInformacao Sobre os Clientes com o nome " << Clientes.at(clientesencontrados.at(0)).nome << '\n';
+			for (int i = 0;i < clientesencontrados.size();i++)
+			{
+				cout
+					<< "\nNome.............: " << Clientes.at(clientesencontrados.at(i)).nome << '\n'
+					<< "NIF..............: " << Clientes.at(clientesencontrados.at(i)).NIF << '\n'
+					<< "Agregado Familiar: " << Clientes.at(clientesencontrados.at(i)).agregado << '\n'
+					<< "Morada...........: " << Clientes.at(clientesencontrados.at(i)).morada.rua << " / " << Clientes.at(clientesencontrados.at(i)).morada.porta << " / " << Clientes.at(clientesencontrados.at(i)).morada.andar << " / " << Clientes.at(clientesencontrados.at(i)).morada.codPostal << " / " << Clientes.at(clientesencontrados.at(i)).morada.localidade << '\n'
+					<< "Pacotes Comprados: " << Clientes.at(clientesencontrados.at(i)).pacotes << "\n\n";
+			}				
+		}
+		cout<< "Insira 0(zero) para voltar atras.";
+		cin >> continuar;
+		verificarVoltarAtras(continuar);
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+}
+
+// Sub_menu -> Visualizar Informação.
+void visualInfo(vector<Client>Clientes,vector<TravelPack>Pacotes)
+{
+	bool ON = true;
+	int opcao;
+	while (ON)
+	{
+		cout<< "\n\t\t\tGERIR INFORMACOES" << '\n'
+			<< "\n1. Visualizar Informacao de um Cliente especifico." << '\n'
+			<< "2. Visualizar Informacao de todos os Clientes." << '\n'
+			<< "3. Visualizar Informacao de Pacotes disponives." <<'\n'
+			<< "4. Visualizar Informacao de Pacotes vendidos a Clientes."<<'\n'
+			<< "5. Visualizar o numero e o valor dos Pacotes vendidos."<<"\n\n"
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(opcao, 6);
+		switch (opcao)
+		{
+		case 1:
+			verInfoClient(Clientes);
+			break;
+		case 2:
+			verInfoClients(Clientes);
+			break;
+		case 3:
+			verInfoPacotesD(Pacotes);
+			break;
+		case 4:
+			verInfoPacotesV(Clientes,Pacotes);
+			break;
+		case 5:
+			verRendimento(Clientes,Pacotes);
+			break;
+		case 0:
+			ON = false;
+			break;
+		}
+	}
+}
+
+//----------------------------Gestão de Pacotes-Funções-------------------
+
+// Remoção de Pacotes.
+void removerPacote(vector<TravelPack> &Pacotes)
+{
+	int aux;
+	bool nexist = true;
+	cout << "\n\t\t\tREMOVER PACOTE"<<'\n';
+	cout << "\nInsira o identificador do Pacote que pretende remover(0 para voltar atras): ";
+	cin >> aux;
+	verificarOpcoes(aux, 0);
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	while (nexist)
+	{
+		if (aux != 0)
+		{
+			for (int k = 0; k < Pacotes.size();k++)
+			{
+				if (Pacotes.at(k).id == aux|| Pacotes.at(k).id == -aux)
+				{
+					nexist = false;
+					char confirmar;
+					cout << "Tem a certeza que quer remover o pacote " << aux << " ?(y/n) ";
+					cin >> confirmar;
+					verificarPasso(confirmar);
+					if (confirmar == 'y')
+					{
+						Pacotes.erase(Pacotes.begin() + k);
+						cout << "\nPacote removido com sucesso!!!" << endl;
+						cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+					}
+				}
+			}
+			if (nexist == true)
+			{
+			cout << "\nO Pacote " << aux << " nao existe, tente novamente. ";
+			cin >> aux;
+			verificarOpcoes(aux, 0);
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			}			
+		}
+	}
+}
+
+// Alterar Pacote - Parte 2 - Alteração dos dados do Pacote. 
+void alterarPacote2(int aux,vector<TravelPack>&Pacotes)
+{	
+	int opcao;
+	bool ON = true;
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	while (ON)
+	{
+		cout << "\n\t\t\tALTERAR PACOTES" << '\n'
+			<< "Pacote: " << Pacotes.at(aux).id << "\n\n"
+			<< "1. Alterar identificador numerico." << '\n'
+			<< "2. Alterar local/locais turisticos." << '\n'
+			<< "3. Alterar data de inicio de viagem." << '\n'
+			<< "4. Alterar data de fim de viagem." << '\n'
+			<< "5. Alterar preco por pessoa." << '\n'
+			<< "6. Alterar numero de lugares disponives." << '\n'
+			<< "7. Alterar numero de lugares vendidos." << "\n\n"
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao que prentende alterar: ";
+		cin >> opcao;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(opcao, 7);
+		switch (opcao)
+		{
+		case 1:
+			cout << "\n\t\t\tALTERCAO DO IDENTIFICADOR NUMERICO" << "\n\n"
+				<< "Identificador numerico.....: " << Pacotes.at(aux).id << '\n'
+				<< "Novo identificador numerico: ";
+			cin >> Pacotes.at(aux).id;
+			verificarNumeroPositivo(Pacotes.at(aux).id);
+			verificarIdDoPacote(Pacotes.at(aux).id, Pacotes);
+			cout << "\nIdentificador numerico alterado com sucesso!!!" << '\n';
+			break;
+		case 2:
+			cout << "\n\t\t\tALTERCAO DO LOCAL/LOCAIS TURISTICOS" << "\n\n"
+				<< "Local/locais turisticos.....: " << Pacotes.at(aux).locais << '\n'
+				<< "Novo local/locais turisticos: ";
+			cin.ignore(100, '\n');
+			getline(cin, Pacotes.at(aux).locais);
+			cout << "\nLocal/locais turisticos alterado com sucesso!!!" << '\n';
+			break;
+		case 3:
+			char barra;
+			cout << "\n\t\t\tALTERCAO DA DATA DE INICIO DE VIAGEM" << "\n\n"
+				<< "Data de inicio de viagem.....: " << Pacotes.at(aux).dataIni.ano<<'/'<<Pacotes.at(aux).dataIni.mes<<'/'<<Pacotes.at(aux).dataIni.dia << '\n'
+				<< "Nova data de inicio de viagem: ";
+			cin >> Pacotes.at(aux).dataIni.ano >> barra >> Pacotes.at(aux).dataIni.mes >> barra >> Pacotes.at(aux).dataIni.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> Pacotes.at(aux).dataIni.ano >> barra >> Pacotes.at(aux).dataIni.mes >> barra >> Pacotes.at(aux).dataIni.dia;
+			}
+			cout << "\nLocal/locais turisticos alterado com sucesso!!!" << '\n';
+			break;
+		case 4:
+			cout << "\n\t\t\tALTERCAO DA DATA DE FIM DE VIAGEM" << "\n\n"
+				<< "Data de fim de viagem.....: " << Pacotes.at(aux).dataFim.ano << '/' << Pacotes.at(aux).dataFim.mes << '/' << Pacotes.at(aux).dataFim.dia << '\n'
+				<< "Nova data de fim de viagem: ";
+			cin.ignore(100, '\n');
+			cin >> Pacotes.at(aux).dataFim.ano >> barra >> Pacotes.at(aux).dataFim.mes >> barra >> Pacotes.at(aux).dataFim.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> Pacotes.at(aux).dataFim.ano >> barra >> Pacotes.at(aux).dataFim.mes >> barra >> Pacotes.at(aux).dataFim.dia;
+			}
+			cout << "\nLocal/locais turisticos alterado com sucesso!!!" << '\n';
+			break;
+		case 5:
+			cout << "\n\t\t\tALTERCAO DO PRECO POR PESSOA" << "\n\n"
+				<< "Preco por pessoa.....: " << Pacotes.at(aux).precoP << '\n'
+				<< "Novo preco por pessoa: ";
+			cin>> Pacotes.at(aux).precoP;
+			verificarNumeroPositivo(Pacotes.at(aux).precoP);
+			cout << "\nPreco por pessoa alterado com sucesso!!!" << '\n';
+			break;
+		case 6:
+			cout << "\n\t\t\tALTERCAO DO NUMERO DE LUGARES DISPONIVEIS" << "\n\n"
+				<< "Numero de lugares disponiveis.....: " << Pacotes.at(aux).lugares << '\n'
+				<< "Novo numero de lugares disponiveis: ";
+			cin >> Pacotes.at(aux).lugares;
+			verificarNumeroPositivo(Pacotes.at(aux).lugares);
+			cout << "\nNumero de lugares disponiveis alterado com sucesso!!!" << '\n';
+			break;
+		case 7:
+			cout << "\n\t\t\tALTERCAO DO NUMERO DE LUGARES VENDIDOS" << "\n\n"
+				<< "Numero de lugares vendidos.....: " << Pacotes.at(aux).lugaresV << '\n'
+				<< "Novo numero de lugares vendidos: ";
+			cin >> Pacotes.at(aux).lugaresV;
+			verificarNumeroPositivo(Pacotes.at(aux).lugaresV);
+			cout << "\nNumero de lugares vendidos alterado com sucesso!!!" << '\n';
+			break;
+		case 0:
+			ON = false;
+			break;
+		}
+	}
+}
+
+// Alterar Pacote - Parte 1 - Sub_Menu -> Alterar Pacotes.
+void alterarPacote(vector<TravelPack>&Pacotes)
+{
+	int aux;
+	cout << "\n\t\t\tALTERAR PACOTES" << endl;
+	cout<< "\nInsira o identificador numerico do pacote que pretende alterar(0 para voltar atras): ";
+	cin >> aux;
+	verificarOpcoes(aux, 0);
+	if (aux == 0)
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		findPacoteById(aux,Pacotes);
+	}
+	cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+}
+
+// Criar um novo Pacote.
+void criarPacote(vector<TravelPack>&Pacotes)
+{
+	char confirmar;
+	cout << "Tem a certeza que quer criar um novo Pacote?(y/n) ";
+	cin >> confirmar;
+	verificarPasso(confirmar);
+	if (confirmar == 'y')
+	{
+		char barra;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl
+			<< "\n\t\t\tCRIAR PACOTE" << '\n';
+		TravelPack new_pacote;
+		cout << "\nIdentificador numerico unico do Pacote: ";    
+		cin >> new_pacote.id ;
+		verificarNumeroPositivo(new_pacote.id);
+		verificarIdDoPacote(new_pacote.id,Pacotes);
+		cout << "Local ou locais turistico(s) de destino (pode ser seguido de um hifen com uma lista dos principais locais turisticos a visitar, separados por virgula): ";        
+		cin.ignore(100, '\n');
+		getline(cin, new_pacote.locais);
+		cout << "Data de inicio da viagem no formato (AAAA/MM/DD): ";
+		cin >> new_pacote.dataIni.ano >> barra >> new_pacote.dataIni.mes >> barra >> new_pacote.dataIni.dia;
+		while (cin.fail())
+		{
+			cin.clear(); cin.ignore(100, '\n');
+			cout << "Input invalido! Tente novamente.: ";
+			cin >> new_pacote.dataIni.ano >> barra >> new_pacote.dataIni.mes >> barra >> new_pacote.dataIni.dia;
+		}
+
+		cout << "Data de fim da viagem no formato (AAAA/MM/DD): ";
+		cin >> new_pacote.dataFim.ano >> barra >> new_pacote.dataFim.mes >> barra >> new_pacote.dataFim.dia;
+		while (cin.fail())
+		{
+			cin.clear(); cin.ignore(100, '\n');
+			cout << "Input invalido! Tente novamente.: ";
+			cin >> new_pacote.dataFim.ano >> barra >> new_pacote.dataFim.mes >> barra >> new_pacote.dataFim.dia;
+		}
+		cout << "Preco por pessoa: ";
+		cin >> new_pacote.precoP; 
+		verificarNumeroPositivo(new_pacote.precoP);
+		cout << "Numero de lugares disponiveis: ";    
+		cin>> new_pacote.lugares;
+		verificarNumeroPositivo(new_pacote.lugares);
+		new_pacote.lugaresV = 0;
+		Pacotes.push_back(new_pacote);
+		cout << "\nPacote criado com sucesso!!!" << endl;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+}
+
+// Sub_menu -> de GerirPacotes.
+void gerPacotes(vector<TravelPack>&Pacotes) // Sub_Menu de gestão de pacotes.
+{
+	bool ON = true;
+	int opcao;
+	while (ON)
+	{
+		cout<< "\n\t\t\tGERIR PACOTES" << '\n'
+				<< "\n1. Criar Pacote." << '\n'
+				<< "2. Alterar Pacote." << '\n'
+				<< "3. Remover Pacote." << "\n\n"
+				<< "0. Menu Anterior." << "\n\n"	
+				<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(opcao, 4);
+		switch (opcao)
+		{
+		case 1:
+			criarPacote(Pacotes);
+			break;
+		case 2:
+			alterarPacote(Pacotes);
+			break;
+		case 3:
+			removerPacote(Pacotes);
+			break;
+		case 0:
+			ON = false;
+			break;
+		}
+	}
+}
+
+//----------------------------Gestão de Clientes-Funções------------------
+
+// Remoção de Clientes
+void removerClient(vector<Client>&Clientes)
+{
+	int opcao;
+	vector<int> clientesencontrados;
+	string aux;
+	char confirmar;
+	cout << "\n\t\t\tREMOVER CLIENTE" << '\n'
+		<< "\nNome completo do cliente que pretende remover(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, aux);
+	if (aux == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		findCliente(aux, clientesencontrados,Clientes);
+		verificarNomeCliente(clientesencontrados, aux,Clientes);
+		if (clientesencontrados.size() == 1)
+		{
+			cout << "\nTem a certeza que quer remover o cliente "<<Clientes.at(clientesencontrados.at(0)).nome<<" ?(y/n) ";
+			cin >> confirmar;
+			verificarPasso(confirmar);
+			if (confirmar == 'y')
+			{
+				Clientes.erase(Clientes.begin() + clientesencontrados.at(0));
+				cout <<"\nCliente "<<aux<<" removido(a) com sucesso!!!"<<endl
+					 << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			}
+			else
+				removerClient(Clientes);
+		}
+		else
+		{
+			cout << "\nExiste mais que um cliente com o nome " << aux << ", selecione o numero do cliente pretendido." << endl;
+			for (int i = 0;i < clientesencontrados.size();i++)
+			{
+				cout << '\n' << i + 1 << "."
+					<< "\nNome.............: " << Clientes.at(clientesencontrados.at(i)).nome << '\n'
+					<< "NIF..............: " << Clientes.at(clientesencontrados.at(i)).NIF << '\n'
+					<< "Agregado Familiar: " << Clientes.at(clientesencontrados.at(i)).agregado << '\n'
+					<< "Morada...........: " << Clientes.at(clientesencontrados.at(i)).morada.rua << " / " << Clientes.at(clientesencontrados.at(i)).morada.porta << " / " << Clientes.at(clientesencontrados.at(i)).morada.andar << " / " << Clientes.at(clientesencontrados.at(i)).morada.codPostal << " / " << Clientes.at(clientesencontrados.at(i)).morada.localidade << '\n'
+					<< "Pacotes Comprados: " << Clientes.at(clientesencontrados.at(i)).pacotes << '\n';
+			}
+			cout << "\nCliente a remover: ";
+			cin >> opcao;
+			verificarOpcoes(opcao, clientesencontrados.size());
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			cout << "\nTem a certeza que quer remover o cliente " << Clientes.at(clientesencontrados.at(0)).nome << " ?(y/n) ";
+			cin >> confirmar;
+			verificarPasso(confirmar);
+			if (confirmar == 'y')
+			{
+				Clientes.erase(Clientes.begin() + clientesencontrados.at(opcao-1));
+				cout << "\nCliente " << aux << " removido(a) com sucesso!!!" << endl
+					<< "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			}
+			else
+				removerClient(Clientes);
+		}
+	}
+}
+
+// Alterar Cliente - Parte 3 - Alteração do dados do Cliente em relação a morada.
+void alterClientMorada(int aux,vector<Client> &Clientes)
+{
+	int aux1;
+	bool ON = true;
+	while (ON)
+	{
+		cout << "\n\t\t\tALTERCAO DA MORADA" << '\n'
+			<< "1. Alterar Rua." << '\n'
+			<< "2. Alterar Numero de Porta." << '\n'
+			<< "3. Alterar Andar." << '\n'
+			<< "4. Alterar Codigo Postal." << '\n'
+			<< "5. Alterar Localidade." << '\n'
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> aux1;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(aux1, 5);
+		switch (aux1)
+		{
+		case 1:
+			cout << "\n\t\t\tALTERCAO DA MORADA-RUA" << "\n\n"
+				<< "Rua.....: " << Clientes.at(aux).morada.rua << '\n'
+				<< "Nova Rua: ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).morada.rua);
+			cout << "\nRua alterada com sucesso!!!" << '\n';
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			break;
+		case 2:
+			cout << "\n\t\t\tALTERCAO DA MORADA-NUMERO DE PORTA" << "\n\n"
+				<< "Numero de Porta.....: " << Clientes.at(aux).morada.porta << '\n'
+				<< "Novo Numero de Porta: ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).morada.porta);
+			cout << "\nNumero de Porta alterado com sucesso!!!" << '\n';
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			break;
+		case 3:
+			cout << "\n\t\t\tALTERCAO DA MORADA-ANDAR" << "\n\n"
+				<< "Andar.................................: " << Clientes.at(aux).morada.andar << '\n'
+				<< "Novo Andar(\"-\" se nao for aplicavel): ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).morada.andar);
+			cout << "\nAndar alterado com sucesso!!!" << '\n';
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			break;
+		case 4:
+			cout << "\n\t\t\tALTERCAO DA MORADA-CODIGO POSTAL" << "\n\n"
+				<< "Codigo Postal...............: " << Clientes.at(aux).morada.codPostal << '\n'
+				<< "Novo Codigo Postal(****-ooo): ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).morada.codPostal);
+			cout << "\nCodigo Postal alterado com sucesso!!!" << '\n';
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			break;
+		case 5:
+			cout << "\n\t\t\tALTERCAO DA MORADA-LOCALIDADE" << "\n\n"
+				<< "Localidade.....: " << Clientes.at(aux).morada.localidade << '\n'
+				<< "Nova Localidade: ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).morada.localidade);
+			cout << "\nLocalidade alterada com sucesso!!!" << '\n';
+			cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+			break;
+		case 0:
+			ON = false;
+		}
+	}
+}
+
+// Alterar Cliente - Parte 2 - Alteração dos dados do cliente.
+void alterClient2(int aux,vector<Client> &Clientes)
+{	
+	int aux1;
+	bool ON = true;
+	while (ON)
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		cout << "\n\t\t\tALTERAR CLIENTE" << '\n'
+			<< "\nCliente: " << Clientes.at(aux).nome << endl;
+		cout
+			<< "\n1. Alterar Nome." << '\n'
+			<< "2. Alterar NIF." << '\n'
+			<< "3. Alterar Agregado Familiar." << '\n'
+			<< "4. Alterar Morada." << '\n'
+			<< "5. Alterar Pacotes Comprados." << '\n'
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> aux1;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(aux1, 5);
+		switch (aux1)
+		{
+		case 1:
+			cout << "\n\t\t\tALTERCAO DO NOME" << "\n\n"
+				<< "Nome.....: " << Clientes.at(aux).nome << '\n'
+				<< "Novo Nome: ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).nome);
+			cout << "\nNome alterado com sucesso!!!" << '\n';
+			break;
+		case 2:
+			cout << "\n\t\t\tALTERCAO DO NIF" << "\n\n"
+				<< "NIF.....: " << Clientes.at(aux).NIF << '\n'
+				<< "Novo NIF: ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).NIF);
+			cout << "\nNIF alterado com sucesso!!!" << '\n';
+			break;
+		case 3:
+			cout << "\n\t\t\tALTERCAO DO AGREGADO FAMILIAR" << "\n\n"
+				<< "Agregado Familiar.....: " << Clientes.at(aux).agregado << '\n'
+				<< "Novo Agregado Familiar: ";
+			cin >> Clientes.at(aux).agregado;
+			verificarNumeroPositivo(Clientes.at(aux).agregado);
+			cout << "\nAgregado Familiar alterado com sucesso!!!" << '\n';
+			break;
+		case 4:
+			alterClientMorada(aux, Clientes);
+			break;
+		case 5:
+			cout << "\n\t\t\tALTERCAO DOS PACOTES COMPRADOS" << "\n\n"
+				<< "Pacotes Comprados.........................: " << Clientes.at(aux).pacotes << '\n'
+				<< "Novos Pacotes Comprados(separados por \";\"): ";
+			cin.ignore(100, '\n');
+			getline(cin, Clientes.at(aux).pacotes);
+			cout << "\nPacotes Comprados alterados com sucesso!!!" << '\n';
+			break;
+		case 0:
+			ON = false;
+		}
+	}
+}
+
+// Alterar Cliente - Parte 1 - Sub_menu -> Alterar Clientes.
+void alterClient(vector<Client> &Clientes)
+{
+	int opcao;
+	vector<int> clientesencontrados;
+	string aux;
+	cout << "\n\t\t\tALTERAR CLIENTE" << '\n';
+	cout << "\nNome completo do cliente que pretende alterar(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, aux);
+	if (aux == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		findCliente(aux,clientesencontrados,Clientes);
+		verificarNomeCliente(clientesencontrados, aux, Clientes);
+		if (clientesencontrados.size()==1)
+		{
+			alterClient2(clientesencontrados.at(0),Clientes);
+		}
+		else
+		{
+			cout << "\nExiste mais que um cliente com o nome " << aux << ", selecione o numero do cliente pretendido."<<endl;
+			for (int i = 0;i < clientesencontrados.size();i++)
+			{
+				cout<<'\n'<<i+1<<"."
+					<< "\nNome.............: " << Clientes.at(clientesencontrados.at(i)).nome << '\n'
+					<< "NIF..............: " << Clientes.at(clientesencontrados.at(i)).NIF << '\n'
+					<< "Agregado Familiar: " << Clientes.at(clientesencontrados.at(i)).agregado << '\n'
+					<< "Morada...........: " << Clientes.at(clientesencontrados.at(i)).morada.rua << " / " << Clientes.at(clientesencontrados.at(i)).morada.porta << " / " << Clientes.at(clientesencontrados.at(i)).morada.andar << " / " << Clientes.at(clientesencontrados.at(i)).morada.codPostal << " / " << Clientes.at(clientesencontrados.at(i)).morada.localidade << '\n'
+					<< "Pacotes Comprados: " << Clientes.at(clientesencontrados.at(i)).pacotes << '\n';
+			}
+			cout << "\nCliente a alterar: ";
+			cin >> opcao;
+			verificarOpcoes(opcao, clientesencontrados.size());
+			alterClient2(clientesencontrados.at(opcao - 1),Clientes);
+		}
+	}
+}
+
+// Criar um novo Cliente.
+void criarClient(vector<Client> &Clientes) // função para criar um novo cliente.
+{
+	char aux;
+	cout << "Tem a certeza que quer criar um novo Cliente?(y/n) ";
+	cin >> aux;
+	verificarPasso(aux);
+	if (aux == 'y')
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl
+			 << "\n\t\t\tCRIAR CLIENTE" << '\n';
+		Client new_client;
+		cout << "\nNome: ";                		
+		cin.ignore(100, '\n');           
+		getline(cin,new_client.nome);
+		cout << "NIF: ";                                 
+		getline(cin, new_client.NIF);
+		cout << "Agregado Familiar: ";
+		cin >> new_client.agregado;
+		verificarNumeroPositivo(new_client.agregado);
+		cin.ignore(100,'\n');
+		cout << "\nMORADA" << endl;
+		cout << "Rua: ";                                        
+		getline(cin, new_client.morada.rua);
+		cout << "Porta: ";                                      
+		getline(cin, new_client.morada.porta);
+		cout << "Andar: ";                                       
+		getline(cin, new_client.morada.andar);
+		cout << "Codigo Postal(****-ooo): ";                              
+		getline(cin, new_client.morada.codPostal);
+		cout << "Localidade: ";  
+		getline(cin, new_client.morada.localidade);
+		cout << "\nPacotes Comprados(separados por \";\"): ";  
+		getline(cin, new_client.pacotes);
+		Clientes.push_back(new_client);
+		cout << "\nCliente criado com sucesso!!!" << endl;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+}
+
+// Sub_menu -> Gerir Clientes.
+void gerClientes(vector<Client> &Clientes) // Sub_Menu de gestão de clientes.
+{
+	bool ON = true;
+	int opcao;
+	while (ON)
+	{
+		cout << "\n\t\t\tGERIR CLIENTES" << '\n'
+			<< "\n1. Criar Cliente." << '\n'
+			<< "2. Alterar Cliente." << '\n'
+			<< "3. Remover Cliente." << "\n\n"
+			<< "0. Menu Anterior." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(opcao, 3);
+		switch (opcao)
+		{
+		case 1:
+			criarClient(Clientes);
+			break;
+		case 2:
+			alterClient(Clientes);
+			break;
+		case 3:
+			removerClient(Clientes);
+			break;
+		case 0:
+			ON=false;
+			break;
+		}
+	}
+}
+
+//-----------------------------Comprar Pacotes-Funções--------------------
+
+// Compra de Pacotes - Parte 3 - Conclusão da compra, onde é alterados o conteúdo dos ficheiros Clientes/Pacotes
+void concluirCompra(int cliente,int pacote,vector<Client> &Clientes,vector<TravelPack> &Pacotes)
+{
+	Pacotes.at(pacote).lugaresV += Clientes.at(cliente).agregado;
+	if (Pacotes.at(pacote).lugares == Pacotes.at(pacote).lugaresV)
+		Pacotes.at(pacote).id = -Pacotes.at(pacote).id;
+	if (Clientes.at(cliente).pacotes=="")
+		Clientes.at(cliente).pacotes += to_string(Pacotes.at(pacote).id);
+	else
+		Clientes.at(cliente).pacotes += "; "+to_string(Pacotes.at(pacote).id);
+	cout << "\nPacote comprado com sucesso!!!"<<endl;
+}
+
+// Compra de Pacotes - Parte 2 - Destino + Datas de Inicio e Fim.
+void pacoteAcomprar(int cliente, vector <TravelPack>&Pacotes,vector<Client>&Clientes)
+{
+	string destino;
+	int aux2 = 0,pacote;
+	vector<int> pacotesencontrados;
+	cout << "Destino pretendido(0 para voltar atras): ";
+	getline(cin, destino);
+	findPacoteByName(destino, pacotesencontrados, Pacotes);
+	analisarPacotesD(pacotesencontrados, Pacotes);
+	if (destino == "0")
+	{
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+	else
+	{
+		while (aux2 == 0)
+		{
+			verificarPacote(pacotesencontrados, destino, Pacotes);
+			char barra;
+			Date inicio;
+			Date fim;
+			cout << "Data de inicio de viagem (no formato AAAA/MM/DD).: ";
+			cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> inicio.ano >> barra >> inicio.mes >> barra >> inicio.dia;
+			}
+			cout << "Data de fim de viagem (no formato AAAA/MM/DD)....: ";
+			cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+			while (cin.fail())
+			{
+				cin.clear(); cin.ignore(100, '\n');
+				cout << "Input invalido! Tente novamente.: ";
+				cin >> fim.ano >> barra >> fim.mes >> barra >> fim.dia;
+			}
+			cout << "\nPacotes Disponiveis para Compra: " << endl;
+			for (int k = 0;k < pacotesencontrados.size();k++)
+			{
+				datasEntre(pacotesencontrados.at(k), inicio, fim, aux2, Pacotes);
+			}
+			if (aux2 == 0)
+			{
+				cout << "\nNao foi encontrado nenhum pacote disponivel com o destino " << destino << " entre essas duas datas!!!" << endl
+					<< "Porfavor introduza as datas novamente." << endl << endl;
+			}
+		}
+		cout << "\nInsira o identificador numerico do Pacote que prentende comprar: ";
+		cin >> pacote;
+		cin.ignore(100, '\n');
+		verificarOpcoes(pacote, 0);
+		bool nexist = true;
+		while (nexist)
+		{
+			for (int i = 0;i < pacotesencontrados.size();i++)
+			{
+				if (pacote == Pacotes.at(pacotesencontrados.at(i)).id)
+				{
+					pacote = i;
+					nexist = false;
+					break;
+				}
+			}
+			if (nexist == false)
+				break;
+			else
+			{
+				cout << "\nInput invalido! Tente novamente: ";
+				cin >> pacote;
+				cin.ignore(100, '\n');
+				verificarOpcoes(pacote, 0);
+			}
+		}
+		if (verificarLugares(cliente,pacote,Clientes,Pacotes))
+			concluirCompra(cliente,pacote,Clientes,Pacotes);
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	}
+}
+
+// Compra de Pacotes - Parte 1 - Nome do cliente.
+void comprarPacotes(vector<Client> &Clientes, vector<TravelPack>&Pacotes)
+{
+	string nomeCliente;
+	vector<int> clientesencontrados;
+	int opcao;
+	cout << "\n\t\t\tCOMPRA DE PACOTES" << "\n\n"
+		<< "Nome completo do Cliente(0 para voltar atras): ";
+	cin.ignore(100, '\n');
+	getline(cin, nomeCliente);
+	if (nomeCliente=="0")
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+	else
+	{
+		findCliente(nomeCliente, clientesencontrados, Clientes);
+		verificarNomeCliente(clientesencontrados, nomeCliente, Clientes);
+		if (clientesencontrados.size() == 1)
+		{
+			pacoteAcomprar(clientesencontrados.at(0),Pacotes,Clientes);
+		}
+		else
+		{
+			cout << "\nExiste mais que um cliente com o nome " << nomeCliente << ", selecione o numero do cliente pretendido." << endl;
+			for (int i = 0;i < clientesencontrados.size();i++)
+			{
+				cout << '\n' << i + 1 << "."
+					<< "\nNome.............: " << Clientes.at(clientesencontrados.at(i)).nome << '\n'
+					<< "NIF..............: " << Clientes.at(clientesencontrados.at(i)).NIF << '\n'
+					<< "Agregado Familiar: " << Clientes.at(clientesencontrados.at(i)).agregado << '\n'
+					<< "Morada...........: " << Clientes.at(clientesencontrados.at(i)).morada.rua << " / " << Clientes.at(clientesencontrados.at(i)).morada.porta << " / " << Clientes.at(clientesencontrados.at(i)).morada.andar << " / " << Clientes.at(clientesencontrados.at(i)).morada.codPostal << " / " << Clientes.at(clientesencontrados.at(i)).morada.localidade << '\n'
+					<< "Pacotes Comprados: " << Clientes.at(clientesencontrados.at(i)).pacotes << '\n';
+			}
+			cout << "\nCliente: ";
+			cin >> opcao;
+			verificarOpcoes(opcao, clientesencontrados.size());
+		}
+	}
+}
+
+//------------------------------------------------------------------------
+
+// Menu principal 
+void mainMenu(vector<Client> &Clientes,vector<TravelPack> &Pacotes) // Menu principal do programa.
+{
+	int opcao;
+	bool ON = true;
+	while (ON)
+	{
+		cout << "\n\t\t\tMENU PRINCIPAL" << '\n'
+			<< "\n1. Gerir Clientes." << '\n'
+			<< "2. Gerir Pacotes Turisticos." << '\n'
+			<< "3. Vizualizar informacao (sobre clientes e sobre pacotes turisticos)." << '\n'
+			<<"4. Comprar Pacotes."<<"\n\n"
+			<< "0. Sair." << "\n\n"
+			<< "Insira a opcao desejada: ";
+		cin >> opcao;
+		cout << "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl;
+		verificarOpcoes(opcao, 4);
+		switch (opcao)
+		{
+		case 0:
+			ON = false;
+			break;
+		case 1:
+			gerClientes(Clientes);
+			break;
+		case 2:
+			gerPacotes(Pacotes);
+			break;
+		case 3:
+			visualInfo(Clientes, Pacotes);
+			break;
+		case 4:
+			comprarPacotes(Clientes, Pacotes);
+			break;
+		}
+	}
+}
+
+//----------------------------Ler Conteúdo dos Ficheiros-Funções----------
+
+// Leitura doo conteúdo do ficheiro dos pacotes da agência.
+void lerContPacote(string pacote,vector<TravelPack> &Pacotes) 
+{
+	char barra ;
+	string aux, aux2;
+	TravelPack NiceHoPack;
+	ifstream pack(pacote);
+	if (pack.fail())
+	{
+		cerr << "\nO ficheiro " << pacote << " nao foi encontrado!" << "\n\n";
+		exit(1);
+	}
+	getline(pack, aux);
+	while (!pack.eof())
+	{
+		pack >> NiceHoPack.id;
+		pack.ignore(100, '\n');
+		getline(pack, NiceHoPack.locais);
+		pack >> NiceHoPack.dataIni.ano >> barra >> NiceHoPack.dataIni.mes >> barra >> NiceHoPack.dataIni.dia;
+		pack >> NiceHoPack.dataFim.ano >> barra >> NiceHoPack.dataFim.mes >> barra >> NiceHoPack.dataFim.dia;
+		pack >> NiceHoPack.precoP;
+		pack >> NiceHoPack.lugares;
+		pack >> NiceHoPack.lugaresV;
+		Pacotes.push_back(NiceHoPack);
+		pack.ignore(100, '\n');
+		getline(pack, aux2);
+	}
+	pack.close();
+}
+
+// Leitura do conteúdo do ficheiro dos clientes da agencia.
+void lerContClient(string client,vector<Client> &Clientes) 
+{
+	string aux;
+	Client NiceHoClient;
+	ifstream cliente(client);
+	if (cliente.fail())
+	{
+		cerr << "\nO ficheiro " << client << " nao foi encontrado!" << "\n\n";
+		exit(1);
+	}
+	while (!cliente.eof())
+	{
+		getline(cliente, NiceHoClient.nome);
+		getline(cliente, NiceHoClient.NIF);
+		cliente >> NiceHoClient.agregado;
+		cliente.ignore(100, '\n');
+		getline(cliente, NiceHoClient.morada.rua, '/');
+		getline(cliente, NiceHoClient.morada.porta, '/');
+		getline(cliente, NiceHoClient.morada.andar, '/');
+		getline(cliente, NiceHoClient.morada.codPostal, '/');
+		getline(cliente, NiceHoClient.morada.localidade);
+		getline(cliente, NiceHoClient.pacotes);
+		Clientes.push_back(NiceHoClient);
+		getline(cliente, aux);
+
+	}
+	cliente.close();
+
+}
+
+// Leitura do conteúdo das agências. 
+void lerContAgen(string agency,vector<Agency> &Agencia) 
+{
+	Agency NiceHoliday;
+	ifstream agencia;
+	agencia.open(agency);
+	while (agencia.fail())
+	{
+		agency.clear();
+		cout << "\nO ficheiro " << agency << " nao foi encontrado!" << "\n\n"
+			<< "Introduza o nome do ficheiro da agencia (no formato exemplo.txt): ";
+		getline(cin, agency);
+		agencia.open(agency);
+	}
+	getline(agencia, NiceHoliday.nome);
+	getline(agencia, NiceHoliday.NIF);
+	getline(agencia, NiceHoliday.URL);
+	getline(agencia, NiceHoliday.morada.rua, '/');
+	getline(agencia, NiceHoliday.morada.porta, '/');
+	getline(agencia, NiceHoliday.morada.andar, '/');
+	getline(agencia, NiceHoliday.morada.codPostal, '/');
+	getline(agencia, NiceHoliday.morada.codPostal);
+	getline(agencia, NiceHoliday.fichClientes);
+	getline(agencia, NiceHoliday.fichPacotes);
+	Agencia.push_back(NiceHoliday);
+	agencia.close();
+}
+//-----------------------------------------------------------------
+
+int main()
+{
+	vector<Agency> Agencia;
+	vector<Client> Clientes;
+	vector<TravelPack> Pacotes;
+	string start;
+	cout << "Introduza o nome do ficheiro da agencia (no formato exemplo.txt): ";
+	getline(cin, start);
+	while (cin.eof())
+	{
+		cin.clear();
+		cout << "\nIntroduza o nome do ficheiro da agencia (no formato exemplo.txt): ";
+		getline(cin, start);
+	}
+	lerContAgen(start,Agencia);
+	lerContClient(Agencia.at(0).fichClientes,Clientes);
+	lerContPacote(Agencia.at(0).fichPacotes,Pacotes);
+	mainMenu(Clientes,Pacotes);
+	guardarAlter(Agencia, Clientes, Pacotes);
+	return 0;
+}
