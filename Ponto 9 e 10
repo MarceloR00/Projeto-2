@@ -1,0 +1,175 @@
+
+struct Destino
+{
+	int Visitas;
+	string Local;
+	vector<int> index;
+};
+
+void sortDestinos(vector<int>visitas, vector<Destino> &destinos)
+{
+	vector <Destino> aux;
+	int temp = 0;
+	sort(visitas.begin(), visitas.end());
+	for (int i = visitas.size()-1;i >= 0;i--)
+	{
+		if (temp != visitas.at(i))
+		{
+			for (int j = 0;j < destinos.size();j++)
+			{
+				if (visitas.at(i) == destinos.at(j).Visitas)
+				{
+					aux.push_back(destinos.at(j));
+					temp = visitas.at(i);
+				}
+			}
+		}
+	}
+	destinos = aux;
+}
+
+void incrementarVisitas(vector<Destino> &destinos,vector <string> locais,int visitas,string idPacote,int index)
+{
+	Destino aux;
+	if (destinos.empty())
+	{
+		for (int i = 0;i < locais.size();i++)
+		{
+			aux.Local = locais.at(i);
+			aux.Visitas = visitas;
+			if (stoi(idPacote) > 0)
+			{
+				aux.index.push_back(index);
+			}
+			destinos.push_back(aux);
+			aux.index.clear();
+		}
+	}
+	else
+	{
+		for (int k = 0;k < locais.size();k++)
+		{
+			for (int j = 0;j < destinos.size();j++)
+			{
+				if (destinos.at(j).Local == locais.at(k))
+				{
+					destinos.at(j).Visitas += visitas;
+					if (stoi(idPacote) > 0)
+					{
+						destinos.at(j).index.push_back(index);
+					}
+				}
+			}
+			aux.Local = locais.at(k);
+			aux.Visitas = visitas;
+			if (stoi(idPacote) > 0)
+			{
+				aux.index.push_back(index);
+			}
+			destinos.push_back(aux);
+			aux.index.clear();
+		}
+	}
+}
+
+void separarDestinos(string aux, vector<string> &destinos)
+{
+	string temp;
+	aux = aux.substr(aux.find('-') + 1, aux.size());
+	for (int i = 0; i < aux.size();i++)
+	{
+		if (aux.at(i) == ',')
+		{
+			destinos.push_back(temp);
+			temp.clear();
+		}
+		else
+		{
+			temp.push_back(aux.at(i));
+		}
+	}
+	destinos.push_back(temp);
+}
+
+void destinosMaisVisitados(vector <Destino> &destinos, vector <Pacotes> Pacotes)
+{
+	vector <string> locais;
+	vector <int> visitas;
+	for (int i = 0;i < Pacotes.size();i++)
+	{
+		locais.clear();
+		separarDestinos(Pacotes.at(i).getDestino(), locais);
+		incrementarVisitas(destinos, locais, stoi(Pacotes.at(i).getLugaresV()),Pacotes.at(i).getId(),i);
+	}
+	for (int j = 0;j < destinos.size();j++)
+	{
+		visitas.push_back(destinos.at(j).Visitas);
+	}
+	sortDestinos(visitas, destinos);
+}
+
+
+int destinosDoCliente(vector<string> aux,vector<Pacotes>Pacotes,vector<Destino>destinos)
+{
+	vector <string> temp;
+	for (int i = 0;i < aux.size();i++)
+	{
+		if (aux.at(i) != "")
+		{
+			for (int j = 0;j < Pacotes.size();j++)
+			{
+				if (aux.at(i) == Pacotes.at(j).getId()|| "-"+aux.at(i) ==Pacotes.at(j).getId())
+				{
+					separarDestinos(Pacotes.at(j).getDestino(), temp);
+				}
+			}
+		}
+	}
+	if (temp.empty())
+	{
+		for (int x = 0;x < destinos.size();x++)
+		{
+			if (destinos.at(x).index.size()!=0)
+			{
+				return destinos.at(x).index.at(0);
+			}
+		}
+	}
+	else
+	{
+		for (int k = 0;k < destinos.size();k++)
+		{
+			bool continuar = true;
+			if (destinos.at(k).index.size()!=0)
+			{
+				for (int u = 0;u < temp.size();u++)
+				{
+					if (temp.at(u) == destinos.at(k).Local)
+					{
+						continuar = false;
+						break;
+					}
+				}
+				if (continuar)
+				{
+					return destinos.at(k).index.at(0);
+				}
+			}
+		}
+	}
+}
+
+void pacotesRecomendadosAClientes(vector <Pacotes> Pacotes,vector<Client> Clientes)
+{
+	vector<Destino> destinos;
+	vector<string> aux;
+	int temp;
+	destinosMaisVisitados(destinos, Pacotes);
+	for (int i = 0;i < Clientes.size();i++)
+	{
+		cout << "\n\nCliente: " << Clientes.at(i).getNome() << endl<<endl;
+		aux = tovector(Clientes.at(i).getPacotAdquiridos());
+		temp = destinosDoCliente(aux, Pacotes,destinos);
+		Pacotes.at(temp).showPacote();
+	}
+}
